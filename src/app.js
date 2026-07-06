@@ -12,8 +12,6 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// NOTA: por alcance del Hito 1, aquí NO se agrega autenticación ni CORS.
-// Eso corresponde a la Entrega Final (JWT, cookies, rutas privadas, CORS con lista blanca).
 
 app.use(express.json());
 
