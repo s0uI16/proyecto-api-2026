@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CFT Social — API REST (Primera Entrega / Hito 1)
 
 API REST para una plataforma tipo red social de orientación de pregrado, del CFT de la
@@ -147,3 +148,6 @@ prisma/
 3. `endpoints públicos + frontend` — controladores, rutas, `app.js`, `index.html`, seed.
 
 Recuerda añadir al profesor como colaborador del repositorio privado.
+=======
+# proyecto-api-2026
+>>>>>>> 98dce44847224d067d5e382566df05eaca925bd6
