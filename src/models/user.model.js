@@ -1,6 +1,25 @@
 import prisma from "../config/prisma.js";
 
 /**
+ * Busca un usuario por id, SIN el campo password.
+ * Uso: cargar el usuario "fresco" desde la BD en el middleware de autenticación,
+ * en vez de confiar ciegamente en el payload del JWT.
+ */
+export async function getUserById(id) {
+  const userId = parseInt(id, 10);
+
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      createdAt: true,
+    },
+  });
+}
+
+/**
  * Devuelve todos los usuarios SIN el campo password.
  * Se usa `select` explícito para garantizar que el hash nunca sale de la capa de datos.
  */

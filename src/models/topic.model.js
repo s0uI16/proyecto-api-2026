@@ -10,6 +10,27 @@ export async function getAllTopics() {
 }
 
 /**
+ * Crea un nuevo tópico. Requiere autenticación (se exige en la ruta).
+ */
+export async function createTopic(data) {
+  return prisma.topic.create({
+    data: {
+      title: data.title,
+      description: data.description,
+    },
+  });
+}
+
+/**
+ * Busca un tópico por título (para validar unicidad antes de crear).
+ */
+export async function getTopicByTitle(title) {
+  return prisma.topic.findUnique({
+    where: { title },
+  });
+}
+
+/**
  * Devuelve los posts de un tópico, incluyendo autor y tópico.
  */
 export async function getPostsByTopicId(topicId) {
