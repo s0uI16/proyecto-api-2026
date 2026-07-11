@@ -6,13 +6,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    #authBox { display: flex; gap: 0.5rem; align-items: center; }
+    #authBox input { padding: 0.3rem; }
+    .hidden { display: none !important; }
     .post { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
     .post h3 { margin: 0 0 0.5rem; }
-    .meta { color: #666; font-size: 0.9rem; }
+    .meta { color: #666; font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .post-actions button { margin-right: 0.5rem; font-size: 0.85rem; }
+    .post textarea { width: 100%; box-sizing: border-box; }
+    #newPostForm { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+    #newPostForm input, #newPostForm textarea, #newPostForm select { width: 100%; box-sizing: border-box; margin-bottom: 0.5rem; padding: 0.4rem; }
+    .error { color: #b00020; font-size: 0.9rem; }
   </style>
 </head>
 <body>
-  <h1>Últimos posts</h1>
+  <header>
+    <h1>CFT Social</h1>
+    <div id="authBox">
+      <div id="loginForm">
+        <input type="email" id="loginEmail" placeholder="email" />
+        <input type="password" id="loginPassword" placeholder="password" />
+        <button id="loginBtn">Ingresar</button>
+        <a href="/register.html">Registrarme</a>
+      </div>
+      <div id="sessionBox" class="hidden">
+        <span id="currentUserLabel"></span>
+        <button id="logoutBtn">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <p id="authError" class="error"></p>
+
+  <form id="newPostForm" class="hidden">
+    <h2>Nuevo post</h2>
+    <input type="text" id="postTitle" placeholder="Título" required />
+    <select id="postTopic" required></select>
+    <textarea id="postContent" placeholder="Contenido" rows="3" required></textarea>
+    <button type="submit">Publicar</button>
+    <p id="postError" class="error"></p>
+  </form>
+
+  <h2>Últimos posts</h2>
   <div id="posts">Cargando...</div>
 
   <script src="/app.js"></script>

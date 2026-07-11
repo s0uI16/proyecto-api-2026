@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Crear cuenta — CFT Social</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: sans-serif; max-width: 400px; margin: 4rem auto; padding: 0 1rem; }
+    input { width: 100%; box-sizing: border-box; padding: 0.5rem; margin-bottom: 0.75rem; }
+    button { padding: 0.5rem 1rem; }
+    .error { color: #b00020; }
+    .success { color: #1b7a1b; }
+  </style>
+</head>
+<body>
+  <h1>Crear cuenta</h1>
+  <form id="registerForm">
+    <input type="text" id="username" placeholder="Nombre de usuario" required />
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password (8+ caracteres, letras y números)" required />
+    <button type="submit">Registrarme</button>
+  </form>
+  <p id="message"></p>
+  <p><a href="/">Volver al inicio</a></p>
+
+  <script src="/register.js"></script>
+</body>
+</html>
