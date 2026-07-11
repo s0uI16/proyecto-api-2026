@@ -1,12 +1,10 @@
-<<<<<<< HEAD
-# CFT Social — API REST (Primera Entrega / Hito 1)
+# CFT Social — API REST Segura (Entrega Final)
 
 API REST para una plataforma tipo red social de orientación de pregrado, del CFT de la
-región de Valparaíso. Esta es la **Primera Entrega Parcial**: entorno seguro,
-arquitectura MVC, base de datos con Prisma y endpoints públicos con contraseñas hasheadas.
-
-> ⚠️ Esta entrega **no incluye** login con JWT, cookies, rutas privadas, control de
-> propiedad (anti-IDOR) ni CORS con lista blanca. Eso corresponde a la Entrega Final.
+región de Valparaíso. Este es el proyecto **completo**: entorno seguro, arquitectura MVC,
+base de datos con Prisma, autenticación con JWT (`jose`) + cookies seguras, control de
+propiedad (anti-IDOR), CSRF, rate limiting, CORS con lista blanca y sanitización de
+entrada — según el enfoque *Security by Design* de OWASP Top 10.
 
 ## Requisitos previos
 
@@ -76,66 +74,131 @@ pnpm start       # modo normal
 
 El frontend mínimo queda disponible en `http://localhost:3000`.
 
-## Endpoints públicos
+## Endpoints
 
-### POST /api/auth/register
+> Los endpoints privados requieren la cookie de sesión (`token`, la pone `/api/auth/login`)
+> y, en métodos que mutan estado (POST/PUT/DELETE), el header `x-csrf-token` con el valor
+> de la cookie `csrfToken` (la entrega cualquier `GET`, incluida la carga de `/`).
+
+### POST /api/auth/register (público)
 
 ```bash
+curl -c cookies.txt -b cookies.txt http://localhost:3000/  # obtiene csrfToken
+
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username":"juanito","email":"juan@mail.com","password":"Password123"}'
 ```
 
-### GET /api/users
+### POST /api/auth/login (público)
+
+```bash
+CSRF=$(grep csrfToken cookies.txt | awk '{print $7}')
+
+curl -X POST http://localhost:3000/api/auth/login \
+  -b cookies.txt -c cookies.txt \
+  -H "Content-Type: application/json" \
+  -H "x-csrf-token: $CSRF" \
+  -d '{"email":"juan@mail.com","password":"Password123"}'
+```
+
+### GET /api/users (público)
 
 ```bash
 curl http://localhost:3000/api/users
 ```
 
-### GET /api/topics
+### GET /api/topics (público)
 
 ```bash
 curl http://localhost:3000/api/topics
 ```
 
-### GET /api/posts
+### POST /api/topics (privado)
+
+```bash
+curl -X POST http://localhost:3000/api/topics \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -H "x-csrf-token: $CSRF" \
+  -d '{"title":"Nuevo tópico","description":"Descripción del tópico."}'
+```
+
+### GET /api/posts (público)
 
 ```bash
 curl http://localhost:3000/api/posts
 ```
 
-### GET /api/posts/user/:userId (Reporte 1)
+### POST /api/posts (privado)
+
+```bash
+curl -X POST http://localhost:3000/api/posts \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -H "x-csrf-token: $CSRF" \
+  -d '{"title":"Mi post","content":"Contenido del post.","topicId":1}'
+```
+
+### PUT /api/posts/:id (privado, solo el dueño)
+
+```bash
+curl -X PUT http://localhost:3000/api/posts/1 \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -H "x-csrf-token: $CSRF" \
+  -d '{"content":"Contenido editado."}'
+```
+
+### DELETE /api/posts/:id (privado, solo el dueño)
+
+```bash
+curl -X DELETE http://localhost:3000/api/posts/1 \
+  -b cookies.txt \
+  -H "x-csrf-token: $CSRF"
+```
+
+### GET /api/posts/user/:userId (Reporte 1, público)
 
 ```bash
 curl http://localhost:3000/api/posts/user/1
 ```
 
-### GET /api/posts/topic/:topicId (Reporte 2)
+### GET /api/posts/topic/:topicId (Reporte 2, público)
 
 ```bash
 curl http://localhost:3000/api/posts/topic/1
 ```
 
-## Seguridad de esta entrega
+## Seguridad implementada (OWASP Top 10)
 
-- Contraseñas hasheadas con bcrypt (10 rondas); nunca almacenadas ni devueltas en texto plano.
-- `.env` fuera del control de versiones; `.env.example` documentado.
-- `.npmrc` con `minimum-release-age=1440` e `ignore-scripts=true`.
-- Validación de entrada en el registro (email, fuerza de contraseña, largo de username).
-- Todas las consultas pasan por Prisma (parametrizadas); sin SQL concatenado.
-- El frontend escapa el contenido dinámico (`escapeHtml`) antes de insertarlo en el DOM.
+- **A02 (fallas criptográficas):** contraseñas hasheadas con bcrypt (10 rondas); nunca en texto plano ni expuestas.
+- **A01/A07 (control de acceso / autenticación):**
+  - Login firma JWT con `jose` (HS256), nunca `jsonwebtoken`.
+  - El token viaja en una cookie `httpOnly`, `sameSite: 'lax'`, `secure` condicional a `NODE_ENV === 'production'` — nunca en `localStorage`.
+  - El middleware `isAuthenticated` carga el usuario fresco desde la BD (no confía ciegamente en el payload del JWT).
+  - Control de propiedad (anti-IDOR) en `PUT/DELETE /api/posts/:id`: solo el autor puede modificar/eliminar.
+  - Rate limiting: `authLimiter` (10 intentos fallidos/15min en login), `registerLimiter` (20/hora), `apiLimiter` general.
+- **A03 (inyección):**
+  - SQLi: todas las consultas pasan por Prisma (parametrizadas), sin SQL concatenado.
+  - XSS: doble defensa — saneamiento de entrada (`src/utils/sanitize.js`, rechaza etiquetas HTML y caracteres de control) **y** codificación de salida (`escapeHtml()` en el frontend antes de insertar en el DOM).
+- **A05 (configuración de seguridad):**
+  - `helmet` con CSP endurecida (`script-src 'self'`, sin `unsafe-inline`; todo el JS del frontend va en archivos externos).
+  - CORS con lista blanca (`CORS_ORIGINS`), sin `origin: '*'`; el mismo origen (el propio frontend en `/public`) nunca se bloquea.
+  - CSRF con patrón *double-submit token* (`x-csrf-token` vs cookie `csrfToken`), comparación en tiempo constante.
 
 ## Estructura del proyecto
 
 ```
 src/
-  config/     # instancia única de PrismaClient
+  config/       # PrismaClient, configuración de JWT (jose)
   controllers/
-  models/     # única capa que importa Prisma
+  models/       # única capa que importa Prisma
+  middlewares/  # auth (JWT), CSRF, rate limiting
   routes/
-  utils/      # validación de entrada
-  public/     # frontend estático (index.html + app.js)
-  app.js      # ensamblaje MVC y arranque del servidor
+  utils/        # validación + sanitización de entrada
+  public/       # frontend: index.html, register.html, app.js, register.js
+  app.js        # ensamblaje MVC, orden de middlewares y arranque del servidor
 prisma/
   schema.prisma
   seed.js
@@ -148,6 +211,3 @@ prisma/
 3. `endpoints públicos + frontend` — controladores, rutas, `app.js`, `index.html`, seed.
 
 Recuerda añadir al profesor como colaborador del repositorio privado.
-=======
-# proyecto-api-2026
->>>>>>> 98dce44847224d067d5e382566df05eaca925bd6
